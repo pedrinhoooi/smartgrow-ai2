@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String      @id @default(cuid())
+  name          String?
+  email         String      @unique
+  passwordHash  String
+  role          Role        @default(CLIENT)
+
+  profileType   ProfileType @default(CNPJ)
+  proofStatus   ProofStatus @default(NOT_REQUIRED)
+  proofFilePath String?
+
+  subscription  Subscription?
+  payments      Payment[]
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Subscription {
+  id               String    @id @default(cuid())
+  userId           String    @unique
+  user             User      @relation(fields: [userId], references: [id])
+
+  plan             Plan      @default(MONTHLY)
+  status           SubStatus @default(PENDING)
+  currentPeriodEnd DateTime?
+
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model Payment {
+  id          String        @id @default(cuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id])
+
+  plan        Plan
+  amountCents Int
+  status      PaymentStatus @default(PENDING)
+  receiptPath String?
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+enum Role {
+  ADMIN
+  CLIENT
+}
+
+enum ProfileType {
+  CNPJ
+  PF_OPENING
+}
+
+enum ProofStatus {
+  NOT_REQUIRED
+  REQUIRED
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+enum Plan {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum SubStatus {
+  PENDING
+  ACTIVE
+  CANCELED
+  PAST_DUE
+}
+
+enum PaymentStatus {
+  PENDING
+  RECEIPT_SUBMITTED
+  APPROVED
+  REJECTED
+}
